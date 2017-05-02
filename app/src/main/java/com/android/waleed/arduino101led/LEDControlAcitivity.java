@@ -1,8 +1,5 @@
 package com.android.waleed.arduino101led;
 
-import android.app.AlarmManager;
-import android.app.Service;
-import android.bluetooth.BluetoothGatt;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -18,37 +15,31 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 
 public class LEDControlAcitivity extends ActionBarActivity {
 
-    Button btnOn, btnOff;
-    //SeekBar brightness;
     private BluetoothLeService mBluetoothLeService;
-    private DeviceControlActivity DCA;
-    private byte[] ON = {(byte)0xff,(byte)0xff,(byte)0xff};
-    private byte[] OFF = {(byte)0x00,(byte)0x00,(byte)0x00};
+    private String mDeviceAddress = "98:4F:EE:0F:84:46";
 
+//  private byte[] ON = {(byte)0xff,(byte)0xff,(byte)0xff};
+//  private byte[] OFF = {(byte)0x00,(byte)0x00,(byte)0x00};
 
     private String led = "19B10001-E8F2-537E-4F6C-D104768A1214";
-    private String brightness = "19B10001-E8F2-537E-4F6C-D104768A1214";
-    //private final static UUID SERVICE = UUID.fromString("19B10000-E8F2-537E-4F6C-D104768A1214");
-    private BluetoothGatt mBluetoothGatt;
 
-    private String mDeviceAddress;
     private final static String TAG = LEDControlAcitivity.class.getSimpleName();
-    private boolean mConnected = false;
-    AlarmManager aManager;
-    private boolean sss = true;
-    private Timer mTimer;
 
-    SeekBar seekbar;
+    private boolean mConnected = false;
+
+    SeekBar brightness;
     TextView textView;
     int progress = 0;
+
+    Button fadeButton;
+    Button blinkButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -61,27 +52,40 @@ public class LEDControlAcitivity extends ActionBarActivity {
 
         findViewById(R.id.button).setOnClickListener(mButton_OnClickListener);
         findViewById(R.id.button2).setOnClickListener(mButton_OnClickListener);
+        findViewById(R.id.button3).setOnClickListener(mButton_OnClickListener);
+        findViewById(R.id.button4).setOnClickListener(mButton_OnClickListener);
 
-        seekbar = (SeekBar) findViewById(R.id.seekBar);
-        seekbar.setMax(500);
-        seekbar.setProgress(progress);
+        // to be able to use setEnabled function
+        fadeButton = (Button) findViewById(R.id.button3);
+        blinkButton = (Button) findViewById(R.id.button4);
+
+        brightness = (SeekBar) findViewById(R.id.seekBar);
+        brightness.setMax(255);
+        brightness.setProgress(progress);
 
         textView = (TextView) findViewById(R.id.textView);
         textView.setText(" " + progress);
         textView.setTextSize(24);
 
-        if(sss == true)
-        seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        brightness.setEnabled(false);
+        fadeButton.setEnabled(false);
+        blinkButton.setEnabled(false);
+
+        brightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
                 textView.setText("" + progress);
 
-                mBluetoothLeService.write(UUID.fromString(brightness), Integer.toString(progress));
-                sss = true;
-                Log.e(TAG, "Brightness has changed");
+                //double p = 255 * ((double) progress / 100.0);
 
-                Log.e(TAG, Integer.toString(progress));
+                //String val = Integer.toString( (int) p);
+
+               // Log.i(TAG, "Val: " + Double.toString(p));
+
+                mBluetoothLeService.write(UUID.fromString(led), Integer.toString(progress));
+
+                Log.i(TAG, "Brightness has changed");
             }
 
             @Override
@@ -95,22 +99,10 @@ public class LEDControlAcitivity extends ActionBarActivity {
             }
         });
 
-        mDeviceAddress ="98:4F:EE:0F:84:46";
 
-        aManager = (AlarmManager) getSystemService(
-                Service.ALARM_SERVICE);
 
-       Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-        mTimer = new Timer();
-        mTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-
-                //mBluetoothLeService.writebyte(UUID.fromString(led), "1");
-                //sss = true;
-            }
-        }, 2000);
     }
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -150,40 +142,46 @@ public class LEDControlAcitivity extends ActionBarActivity {
         }
     };
 
-    //On click listener for button (ON)
+    //--------------------------------------------------------------------------------------------------
+    //On click listener for button (ON & OFF)
     final OnClickListener mButton_OnClickListener = new OnClickListener() {
         public void onClick(final View v) {
             switch(v.getId()) {
                 case R.id.button:
-                    Log.e(TAG, "On Button is clicked");
-                    mBluetoothLeService.write(UUID.fromString(led), "1");
-                    sss = true;
+                    mBluetoothLeService.write(UUID.fromString(led), "127");
+                    brightness.setEnabled(true);
+                    fadeButton.setEnabled(true);
+                    blinkButton.setEnabled(true);
+                    msgOn();
                     break;
+
                 case R.id.button2:
                     //Inform the user the button2 has been clicked
-                    Log.e(TAG, "Off Button is clicked");
                     mBluetoothLeService.write(UUID.fromString(led), "0");
-                    sss = false;
+                    brightness.setEnabled(false);
+                    fadeButton.setEnabled(false);
+                    blinkButton.setEnabled(false);
+                    msgOff();
+                    break;
+                case R.id.button3:
+                    //Inform the user the button3 has been clicked
+                    mBluetoothLeService.write(UUID.fromString(led), "256");
+                    msgFade();
+                    break;
+                case R.id.button4:
+                    //Inform the user the button4 has been clicked
+                    mBluetoothLeService.write(UUID.fromString(led), "257");
+                    msgBlink();
                     break;
             }
-            //Inform the user the button has been clicked
-           // Toast.makeText(this, "Button1 clicked.", Toast.LENGTH_SHORT).show();
-
-            //mBluetoothLeService.readCharacteristic(DCA.globCharacterstic);
-
-
-
         }
     };
-
-
 
 
     @Override
     protected void onResume() {
         super.onResume();
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {
@@ -209,5 +207,23 @@ public class LEDControlAcitivity extends ActionBarActivity {
 
     }
 
+    protected void msgOn(){
+        Log.i(TAG, "On Button is clicked");
+        Toast.makeText(this, "LED is ON", Toast.LENGTH_SHORT).show();
+    }
 
+    protected void msgOff(){
+        Log.i(TAG, "Off Button is clicked");
+        Toast.makeText(this, "LED is OFF", Toast.LENGTH_SHORT).show();
+    }
+
+    protected void msgFade(){
+        Log.i(TAG, "Fade Button is clicked");
+        Toast.makeText(this, "LED is Fading", Toast.LENGTH_SHORT).show();
+    }
+
+    protected void msgBlink(){
+        Log.i(TAG, "Blink Button is clicked");
+        Toast.makeText(this, "LED is Blinking", Toast.LENGTH_SHORT).show();
+    }
 }

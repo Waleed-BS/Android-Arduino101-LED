@@ -35,4 +35,5 @@
 
     <string name="location">Location</string>
     <string name="location_desc">Location permission is needed to display your current location, would you like to reconsider?</string>
+    <string name="led_brightness">LED Brightness</string>
 </resources>

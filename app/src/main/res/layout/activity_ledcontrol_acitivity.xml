@@ -63,10 +63,10 @@
         android:id="@+id/button4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_below="@+id/button"
-        android:layout_marginEnd="21dp"
+        android:layout_marginEnd="22dp"
         android:onClick="buttonOnClick"
-        android:text="Blink"/>
+        android:text="Blink"
+        android:layout_below="@+id/button"
+        android:layout_alignParentEnd="true"/>
 
 </RelativeLayout>

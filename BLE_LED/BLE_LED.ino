@@ -86,9 +86,9 @@ void loop() {
           //Blink
           while (out == 257) {  
             analogWrite(ledPin, 255);
-            delay(500);
+            delay(50);
             analogWrite(ledPin, 0);
-            delay(500);
+            delay(300);
             out = switchCharacteristic.value();
             if(out != 257)
               goto start;  
